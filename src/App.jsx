@@ -6,7 +6,7 @@ import Button from 'react-bootstrap/Button';
 import { loginRequest } from './authConfig';
 import { callMsGraph } from './graph';
 import { ProfileData } from './components/ProfileData';
-
+import { graphConfig } from './authConfig';
 
 /**
  * Renders information about the signed-in user or a button to retrieve data about the user
@@ -14,6 +14,7 @@ import { ProfileData } from './components/ProfileData';
 const ProfileContent = () => {
     const { instance, accounts } = useMsal();
     const [graphData, setGraphData] = useState(null);
+    const [graphTaskLists, setGraphTaskLists] = useState(null);
 
     function RequestProfileData() {
         // Silently acquires an access token which is then attached to a request for MS Graph data
@@ -23,9 +24,22 @@ const ProfileContent = () => {
                 account: accounts[0],
             })
             .then((response) => {
-                callMsGraph(response.accessToken).then((response) => setGraphData(response));
+                callMsGraph(response.accessToken, graphConfig.graphMeEndpoint).then((response) => setGraphData(response));
             });
     }
+
+    function RequestTaskLists() {
+        // Silently acquires an access token which is then attached to a request for MS Graph data
+        instance
+            .acquireTokenSilent({
+                ...loginRequest,
+                account: accounts[0],
+            })
+            .then((response) => {
+                callMsGraph(response.accessToken,graphConfig.taskListEndpoint).then((response) => setGraphTaskLists(response));
+            });
+    }
+
 
     return (
         <>
@@ -36,7 +50,13 @@ const ProfileContent = () => {
                 <Button variant="secondary" onClick={RequestProfileData}>
                     Request Profile Information
                 </Button>
-            )}
+            )}    
+            {graphTaskLists ? 
+                JSON.stringify(graphTaskLists) :(    
+                <Button variant="secondary" onClick={RequestTaskLists}>
+                  Request Task Lists
+            </Button>)
+            }
         </>
     );
 };
